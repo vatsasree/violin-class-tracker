@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Violin Tracker">
+<meta name="theme-color" content="#1a0f2e">
+<title>Violin Tracker</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0e0818;--surface:#1a1028;--surface2:#231637;--surface3:#2d1d47;
+  --accent:#c9a84c;--accent2:#e8c97a;--text:#f0eaf8;--text2:#a899c0;--text3:#6b5f88;
+  --green:#4caf7d;--red:#e05a5a;--amber:#e8a83a;--blue:#5a8fe0;--purple:#9b6fd4;
+  --radius:16px;--radius-sm:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;overscroll-behavior:none}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;padding-top:max(14px,env(safe-area-inset-top));background:var(--bg);border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0}
+.topbar-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--accent2);letter-spacing:.02em}
+.topbar-sub{font-size:11px;color:var(--text3);letter-spacing:.05em;text-transform:uppercase}
+.icon-btn{width:38px;height:38px;border-radius:50%;background:var(--surface2);border:none;color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0}
+.icon-btn:active{opacity:.7}
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px}
+.navbar{display:flex;background:var(--surface);border-top:1px solid rgba(255,255,255,.07);padding-bottom:env(safe-area-inset-bottom);flex-shrink:0}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;cursor:pointer;border:none;background:none;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:400;gap:4px;transition:color .2s}
+.nav-item svg{width:22px;height:22px}
+.nav-item.active{color:var(--accent)}
+.nav-item.active svg path,.nav-item.active svg circle,.nav-item.active svg rect,.nav-item.active svg polyline{stroke:var(--accent)}
+.page{display:none}.page.active{display:block}
+.card{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px;border:1px solid rgba(255,255,255,.06)}
+.card-title{font-size:13px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.student-card{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:10px;border:1px solid rgba(255,255,255,.06);cursor:pointer;transition:border-color .2s}
+.student-card:active{border-color:var(--accent)}
+.student-card-header{display:flex;align-items:center;gap:12px}
+.student-avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;flex-shrink:0}
+.student-info{flex:1;min-width:0}
+.student-name{font-size:16px;font-weight:500;color:var(--text)}
+.student-days{font-size:12px;color:var(--text3);margin-top:2px}
+.student-stats{display:flex;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)}
+.stat{text-align:center;flex:1}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--accent2)}
+.stat-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;letter-spacing:.03em}
+.badge-attended{background:rgba(76,175,125,.15);color:var(--green)}
+.badge-missed{background:rgba(224,90,90,.15);color:var(--red)}
+.badge-cancelled{background:rgba(232,168,58,.15);color:var(--amber)}
+.session-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.session-item:last-child{border-bottom:none}
+.session-date{min-width:48px;text-align:center}
+.session-date-day{font-size:20px;font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--text);line-height:1}
+.session-date-mon{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.session-body{flex:1;min-width:0}
+.session-time{font-size:12px;color:var(--text3)}
+.session-notes{font-size:13px;color:var(--text2);margin-top:4px;font-style:italic}
+.session-lessons{font-size:12px;color:var(--text2);margin-top:3px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 20px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;border:none;cursor:pointer;transition:opacity .2s}
+.btn:active{opacity:.8}
+.btn-primary{background:var(--accent);color:#1a0f2e;width:100%}
+.btn-secondary{background:var(--surface2);color:var(--text);width:100%}
+.btn-danger{background:rgba(224,90,90,.15);color:var(--red)}
+.fab{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));right:20px;width:52px;height:52px;border-radius:50%;background:var(--accent);border:none;color:#1a0f2e;font-size:26px;cursor:pointer;box-shadow:0 4px 20px rgba(201,168,76,.4);display:flex;align-items:center;justify-content:center;z-index:10}
+.fab:active{transform:scale(.95)}
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:flex-end;backdrop-filter:blur(4px)}
+.sheet-overlay.open{display:flex}
+.sheet{background:var(--surface);width:100%;max-height:92vh;border-radius:24px 24px 0 0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom);animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:12px auto 0}
+.sheet-header{padding:16px 20px 12px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between}
+.sheet-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--accent2)}
+.sheet-body{padding:20px}
+.close-btn{background:var(--surface2);border:none;color:var(--text2);width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.form-group{margin-bottom:16px}
+.form-label{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:block}
+.form-input{width:100%;background:var(--surface2);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;padding:12px 14px;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--text3)}
+textarea.form-input{resize:none;min-height:80px}
+select.form-input{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a899c0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+.status-chooser{display:flex;gap:8px}
+.status-opt{flex:1;padding:10px 4px;border-radius:var(--radius-sm);background:var(--surface2);border:2px solid transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;text-align:center;transition:all .2s}
+.status-opt.sel-attended{border-color:var(--green);background:rgba(76,175,125,.15);color:var(--green)}
+.status-opt.sel-missed{border-color:var(--red);background:rgba(224,90,90,.15);color:var(--red)}
+.status-opt.sel-cancelled{border-color:var(--amber);background:rgba(232,168,58,.15);color:var(--amber)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day-name{text-align:center;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;padding:4px 0}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:13px;cursor:pointer;position:relative}
+.cal-day.dot::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--accent)}
+.cal-day.today{background:var(--surface3);color:var(--accent2);font-weight:500}
+.cal-day.other-month{color:var(--text3)}
+.cal-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-month-label{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--accent2)}
+.empty{text-align:center;padding:40px 20px;color:var(--text3)}
+.toast{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface3);color:var(--text);padding:10px 20px;border-radius:30px;font-size:13px;opacity:0;z-index:200;border:1px solid rgba(201,168,76,.3);transition:all .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--text)}
+.upcoming-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer}
+.upcoming-item:last-child{border-bottom:none}
+.upcoming-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.upcoming-info{flex:1}
+.upcoming-name{font-size:14px;font-weight:500}
+.upcoming-time{font-size:12px;color:var(--text3)}
+.upcoming-when{font-size:12px;color:var(--accent);font-weight:500;min-width:60px;text-align:right}
+.payment-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:11px}
+.payment-paid{background:rgba(76,175,125,.15);color:var(--green)}
+.payment-unpaid{background:rgba(224,90,90,.15);color:var(--red)}
+.payment-partial{background:rgba(90,143,224,.15);color:var(--blue)}
+.av-purple{background:rgba(138,99,210,.25);color:#b388ff}
+.av-teal{background:rgba(76,175,125,.25);color:#80cbc4}
+.av-coral{background:rgba(224,90,90,.25);color:#ff8a80}
+.av-blue{background:rgba(90,143,224,.25);color:#82b1ff}
+.av-amber{background:rgba(232,168,58,.25);color:#ffd740}
+.pdf-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:8px;background:rgba(90,143,224,.15);color:var(--blue);font-size:11px}
+.search-bar{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:16px;border:1px solid rgba(255,255,255,.06)}
+.search-bar input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px}
+.search-bar input::placeholder{color:var(--text3)}
+.summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.summary-box{background:var(--surface);border-radius:var(--radius-sm);padding:14px 10px;text-align:center;border:1px solid rgba(255,255,255,.06)}
+.summary-box-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--accent2);line-height:1}
+.summary-box-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:4px}
+.detail-header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.detail-avatar{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;flex-shrink:0}
+/* Schedule slots */
+.sched-slots{display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
+.sched-slot{background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+.sched-slot-body{flex:1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.slot-sel{background:var(--surface3);border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:6px 10px;border-radius:8px;outline:none;flex:1;min-width:90px}
+.slot-time{background:var(--surface3);border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:6px 10px;border-radius:8px;outline:none;flex:1;min-width:110px}
+.slot-rm{background:rgba(224,90,90,.15);border:none;color:var(--red);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;flex-shrink:0}
+.add-slot{display:flex;align-items:center;gap:6px;background:none;border:1px dashed rgba(201,168,76,.3);color:var(--accent);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);cursor:pointer;width:100%;justify-content:center}
+/* Tz */
+.tz-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(155,111,212,.15);color:var(--purple);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:500}
+.tz-compare{display:flex;align-items:center;gap:12px;background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;margin-top:8px}
+.tz-col{flex:1;text-align:center}
+.tz-time{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--accent2)}
+.tz-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.tz-arrow{color:var(--text3);font-size:18px}
+.stz-box{background:rgba(155,111,212,.1);border:1px solid rgba(155,111,212,.2);border-radius:var(--radius-sm);padding:10px 14px;margin-top:-8px;margin-bottom:16px;display:none}
+.stz-box.on{display:block}
+.stz-row{display:flex;align-items:center;gap:8px;font-size:13px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div><div class="topbar-title">🎻 Violin Tracker</div><div class="topbar-sub" id="topbar-sub">Overview</div></div>
+    <button class="icon-btn" id="topbar-action" onclick="openAddSession()">＋</button>
+  </div>
+  <div class="scroll-area" id="main-scroll">
+    <div id="page-home" class="page active">
+      <div class="summary-row" id="home-summary"></div>
+      <div class="card"><div class="card-title">Upcoming classes</div><div id="upcoming-list"></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;margin-top:8px">
+        <div class="section-title">Students</div>
+      </div>
+      <div id="student-list"></div>
+    </div>
+    <div id="page-sessions" class="page">
+      <div class="search-bar">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--text3)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
+        <input type="text" placeholder="Search sessions…" id="session-search" oninput="renderSessions()">
+      </div>
+      <div id="sf" style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px">
+        <button class="badge badge-attended" style="cursor:pointer;padding:6px 14px" data-f="all" onclick="setFilter('all',this)">All</button>
+        <button class="badge badge-attended" style="cursor:pointer;padding:6px 14px;opacity:.5" data-f="attended" onclick="setFilter('attended',this)">✓ Attended</button>
+        <button class="badge badge-missed" style="cursor:pointer;padding:6px 14px;opacity:.5" data-f="missed" onclick="setFilter('missed',this)">✕ Missed</button>
+        <button class="badge badge-cancelled" style="cursor:pointer;padding:6px 14px;opacity:.5" data-f="cancelled" onclick="setFilter('cancelled',this)">◎ Cancelled</button>
+      </div>
+      <div id="sessions-list"></div>
+    </div>
+    <div id="page-calendar" class="page">
+      <div class="card">
+        <div class="cal-month-nav">
+          <button class="icon-btn" onclick="changeMonth(-1)" style="width:32px;height:32px;font-size:16px">&#8249;</button>
+          <div class="cal-month-label" id="cal-month-label"></div>
+          <button class="icon-btn" onclick="changeMonth(1)" style="width:32px;height:32px;font-size:16px">&#8250;</button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div id="cal-day-sessions"></div>
+    </div>
+    <div id="page-settings" class="page">
+      <div class="section-title" style="margin-bottom:16px">Students</div>
+      <div id="settings-students"></div>
+      <button class="btn btn-secondary" onclick="openAddStudent()" style="margin-top:8px">＋ Add student</button>
+      <div style="margin-top:28px;padding-top:20px;border-top:1px solid rgba(255,255,255,.06)">
+        <div class="section-title" style="margin-bottom:12px">About</div>
+        <div style="color:var(--text3);font-size:13px;line-height:1.8">
+          <div>🎻 Violin Tracker</div>
+          <div style="margin-top:4px">Each student can have different days with different times. Timezone comparison is shown automatically for students in other cities. Works fully offline.</div>
+          <div style="margin-top:10px;font-size:11px">Add to iPhone: open in Safari → Share → "Add to Home Screen"</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="detail-page" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:50;overflow-y:auto;-webkit-overflow-scrolling:touch">
+    <div style="padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom))">
+      <button onclick="closeDetail()" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;margin-bottom:18px">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>Back
+      </button>
+      <div id="detail-content"></div>
+    </div>
+  </div>
+  <nav class="navbar">
+    <button class="nav-item active" id="nav-home" onclick="switchPage('home')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>Home
+    </button>
+    <button class="nav-item" id="nav-sessions" onclick="switchPage('sessions')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-linecap="round"/></svg>Sessions
+    </button>
+    <button class="nav-item" id="nav-calendar" onclick="switchPage('calendar')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" stroke-linecap="round"/></svg>Calendar
+    </button>
+    <button class="nav-item" id="nav-settings" onclick="switchPage('settings')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings
+    </button>
+  </nav>
+</div>
+<button class="fab" onclick="fabAction()">＋</button>
+<div class="toast" id="toast"></div>
+
+<!-- SHEET: Student -->
+<div class="sheet-overlay" id="sheet-student">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title" id="ss-title">Add student</div>
+      <button class="close-btn" onclick="closeSheet('sheet-student')">&#10005;</button>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="edit-sid">
+      <div class="form-group">
+        <label class="form-label">Full name</label>
+        <input class="form-input" id="s-name" placeholder="e.g. Priya Sharma" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Class schedule — add one row per class day</label>
+        <div class="sched-slots" id="sched-slots"></div>
+        <button class="add-slot" onclick="addSlot()">＋ Add another class day</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Student location</label>
+        <input class="form-input" id="s-loc" placeholder="e.g. Los Angeles, CA" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Student timezone (auto-shows their local time)</label>
+        <select class="form-input" id="s-tz" onchange="updateTzPreview()">
+          <option value="">— Same as yours / no conversion —</option>
+          <optgroup label="India"><option value="Asia/Kolkata">India — IST (UTC+5:30)</option></optgroup>
+          <optgroup label="United States">
+            <option value="America/New_York">New York — ET</option>
+            <option value="America/Chicago">Chicago — CT</option>
+            <option value="America/Denver">Denver — MT</option>
+            <option value="America/Los_Angeles">Los Angeles — PT</option>
+            <option value="America/Anchorage">Anchorage — AKT</option>
+            <option value="Pacific/Honolulu">Honolulu — HT</option>
+          </optgroup>
+          <optgroup label="Europe">
+            <option value="Europe/London">London — GMT/BST</option>
+            <option value="Europe/Paris">Paris / Berlin — CET</option>
+            <option value="Europe/Moscow">Moscow — MSK</option>
+          </optgroup>
+          <optgroup label="Asia">
+            <option value="Asia/Dubai">Dubai — GST</option>
+            <option value="Asia/Singapore">Singapore — SGT</option>
+            <option value="Asia/Tokyo">Tokyo — JST</option>
+            <option value="Asia/Shanghai">Shanghai — CST</option>
+          </optgroup>
+          <optgroup label="Australia & Pacific">
+            <option value="Australia/Sydney">Sydney — AEDT</option>
+            <option value="Australia/Perth">Perth — AWST</option>
+            <option value="Pacific/Auckland">Auckland — NZST</option>
+          </optgroup>
+          <optgroup label="Americas">
+            <option value="America/Toronto">Toronto — ET</option>
+            <option value="America/Vancouver">Vancouver — PT</option>
+            <option value="America/Sao_Paulo">Sao Paulo — BRT</option>
+            <option value="America/Mexico_City">Mexico City — CST</option>
+          </optgroup>
+        </select>
+        <div id="tz-preview" style="display:none">
+          <div class="tz-compare">
+            <div class="tz-col"><div class="tz-time" id="tz-your">—</div><div class="tz-label" id="tz-your-lbl">Your time</div></div>
+            <div class="tz-arrow">&#8594;</div>
+            <div class="tz-col"><div class="tz-time" id="tz-stu" style="color:var(--purple)">—</div><div class="tz-label" id="tz-stu-lbl">Student time</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--purple);margin-top:6px">&#128336; Live — updates each minute</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Google Meet link (optional)</label>
+        <input class="form-input" id="s-meet" placeholder="https://meet.google.com/…" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes (optional)</label>
+        <textarea class="form-input" id="s-notes" placeholder="e.g. Intermediate level, paying monthly"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="saveStudent()" style="margin-top:4px">Save student</button>
+      <button class="btn btn-danger" id="del-stu-btn" onclick="deleteStudent()" style="margin-top:10px;width:100%;display:none">Delete student</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: Session -->
+<div class="sheet-overlay" id="sheet-session">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">Log a class</div>
+      <button class="close-btn" onclick="closeSheet('sheet-session')">&#10005;</button>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="edit-ses-id">
+      <div class="form-group">
+        <label class="form-label">Student</label>
+        <select class="form-input" id="ses-student" onchange="onSesStudentChange()"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" type="date" id="ses-date" onchange="onSesTimeChange()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your time</label>
+        <input class="form-input" type="time" id="ses-time" oninput="onSesTimeChange()">
+        <div class="stz-box" id="stz-box">
+          <div class="stz-row">
+            <span style="font-weight:500;color:var(--accent2)" id="stz-your">—</span>
+            <span style="color:var(--text3);margin:0 4px">&#8594;</span>
+            <span style="color:var(--purple)" id="stz-stu">—</span>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px" id="stz-lbl">student's local time</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <div class="status-chooser">
+          <button class="status-opt sel-attended" onclick="pickStatus('attended',this)">&#10003; Attended</button>
+          <button class="status-opt" onclick="pickStatus('missed',this)">&#10005; Missed</button>
+          <button class="status-opt" onclick="pickStatus('cancelled',this)">&#9678; Cancelled</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lessons taught</label>
+        <input class="form-input" id="ses-lessons" placeholder="e.g. G major scale, bow technique" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Practice notes / homework</label>
+        <textarea class="form-input" id="ses-notes" placeholder="e.g. Practise 20 mins daily, focus on intonation"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">PDF / sheet music shared</label>
+        <input class="form-input" id="ses-pdf" placeholder="e.g. Kuchler Concertino Op11.pdf" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Payment</label>
+        <select class="form-input" id="ses-pay">
+          <option value="n/a">Not applicable</option>
+          <option value="paid">Paid</option>
+          <option value="unpaid">Unpaid</option>
+          <option value="partial">Partially paid</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="saveSession()" style="margin-top:4px">Save class</button>
+      <button class="btn btn-danger" id="del-ses-btn" onclick="deleteSession()" style="margin-top:10px;width:100%;display:none">Delete this session</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONSTANTS ──────────────────────────────────────────────
+const AV_COLORS = ['av-purple','av-teal','av-coral','av-blue','av-amber'];
+const AV_BG = ['#8a63d2','#4caf7d','#e05a5a','#5a8fe0','#e8a83a'];
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAYS_FULL = {Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday',Sun:'Sunday'};
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MON_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ── DB ─────────────────────────────────────────────────────
+let DB = {students:[], sessions:[]};
+function saveDB(){ localStorage.setItem('violin_v4', JSON.stringify(DB)); }
+function loadDB(){
+  try{ const r=localStorage.getItem('violin_v4'); if(r) DB=JSON.parse(r); }catch(e){}
+  // Migrate v3 -> v4: days+time -> schedule
+  DB.students.forEach(s=>{
+    if(!s.schedule){ s.schedule=(s.days||[]).map(d=>({day:d,time:s.time||''})); delete s.days; delete s.time; }
+  });
+  if(!DB.students.length){
+    DB.students=[
+      {id:'std1',name:'Student 1',schedule:[{day:'Mon',time:'17:00'},{day:'Thu',time:'17:00'}],timezone:'',location:'',meet:'',notes:'',color:0,createdAt:Date.now()},
+      {id:'std2',name:'Student 2',schedule:[{day:'Wed',time:'09:00'},{day:'Fri',time:'18:00'}],timezone:'America/Los_Angeles',location:'Los Angeles, CA',meet:'',notes:'',color:1,createdAt:Date.now()}
+    ];
+    saveDB();
+  }
+}
+function uid(){ return 'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
+function gStudents(){ return DB.students; }
+function gStudent(id){ return DB.students.find(s=>s.id===id); }
+function gSessions(){ return DB.sessions; }
+function gStudSessions(sid){ return DB.sessions.filter(s=>s.studentId===sid).sort((a,b)=>b.date.localeCompare(a.date)); }
+
+// ── TIMEZONE ───────────────────────────────────────────────
+function myTz(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone; }catch(e){ return 'Asia/Kolkata'; } }
+function fmtInTz(date, tz){
+  try{ return new Intl.DateTimeFormat('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZone:tz}).format(date); }catch(e){ return '—'; }
+}
+function tzAbbr(tz){
+  try{ const p=new Intl.DateTimeFormat('en-US',{timeZoneName:'short',timeZone:tz}).formatToParts(new Date()); return p.find(x=>x.type==='timeZoneName')?.value||tz; }catch(e){ return tz; }
+}
+function cvtTime(dateStr, timeStr, toTz){
+  if(!timeStr||!toTz) return null;
+  try{
+    const [y,m,d]=dateStr.split('-').map(Number);
+    const [h,mn]=timeStr.split(':').map(Number);
+    return fmtInTz(new Date(y,m-1,d,h,mn,0), toTz);
+  }catch(e){ return null; }
+}
+
+function updateTzPreview(){
+  const tz=document.getElementById('s-tz').value;
+  const box=document.getElementById('tz-preview');
+  if(!tz){ box.style.display='none'; return; }
+  box.style.display='block';
+  const now=new Date();
+  document.getElementById('tz-your').textContent=fmtInTz(now,myTz());
+  document.getElementById('tz-your-lbl').textContent='Your time ('+tzAbbr(myTz())+')';
+  document.getElementById('tz-stu').textContent=fmtInTz(now,tz);
+  document.getElementById('tz-stu-lbl').textContent='Student ('+tzAbbr(tz)+')';
+}
+setInterval(()=>{ if(document.getElementById('tz-preview').style.display!=='none') updateTzPreview(); },60000);
+
+function onSesTimeChange(){
+  const sid=document.getElementById('ses-student').value;
+  const st=gStudent(sid);
+  const t=document.getElementById('ses-time').value;
+  const d=document.getElementById('ses-date').value;
+  const box=document.getElementById('stz-box');
+  if(!st?.timezone||!t||!d){ box.classList.remove('on'); return; }
+  const converted=cvtTime(d,t,st.timezone);
+  if(!converted){ box.classList.remove('on'); return; }
+  box.classList.add('on');
+  document.getElementById('stz-your').textContent=fmtTime(t)+' your time';
+  document.getElementById('stz-stu').textContent=converted+' '+tzAbbr(st.timezone);
+  document.getElementById('stz-lbl').textContent=(st.location||'Student')+' local time';
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────
+let curPage='home', sesFilter='all', calDate=new Date(), detailSid=null;
+
+function switchPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.getElementById('nav-'+p).classList.add('active');
+  curPage=p; document.getElementById('main-scroll').scrollTop=0;
+  document.getElementById('topbar-sub').textContent={home:'Overview',sessions:'All classes',calendar:'Schedule',settings:'Manage'}[p]||'';
+  document.getElementById('topbar-action').style.display=p==='home'?'flex':'none';
+  if(p==='home') renderHome();
+  if(p==='sessions') renderSessions();
+  if(p==='calendar') renderCalendar();
+  if(p==='settings') renderSettings();
+}
+function fabAction(){ if(curPage==='settings') openAddStudent(); else openAddSession(); }
+
+// ── HOME ───────────────────────────────────────────────────
+function renderHome(){
+  const students=gStudents(), sessions=gSessions();
+  const att=sessions.filter(s=>s.status==='attended').length;
+  const mis=sessions.filter(s=>s.status==='missed').length;
+  document.getElementById('home-summary').innerHTML=`
+    <div class="summary-box"><div class="summary-box-val">${students.length}</div><div class="summary-box-lbl">Students</div></div>
+    <div class="summary-box"><div class="summary-box-val" style="color:var(--green)">${att}</div><div class="summary-box-lbl">Attended</div></div>
+    <div class="summary-box"><div class="summary-box-val" style="color:var(--red)">${mis}</div><div class="summary-box-lbl">Missed</div></div>`;
+
+  const upcoming=getUpcoming(students,7);
+  const uEl=document.getElementById('upcoming-list');
+  if(!upcoming.length){ uEl.innerHTML='<div style="color:var(--text3);font-size:13px;padding:8px 0">No classes in the next 7 days.</div>'; }
+  else uEl.innerHTML=upcoming.slice(0,6).map(u=>{
+    const s=gStudent(u.studentId);
+    const tzLine=s?.timezone?`<span style="color:var(--purple);font-size:11px"> &middot; ${cvtTime(u.date,u.time,s.timezone)||''} ${tzAbbr(s.timezone)}</span>`:'';
+    return `<div class="upcoming-item" onclick="openDetail('${u.studentId}')">
+      <div class="upcoming-dot" style="background:${AV_BG[s?.color%5||0]}"></div>
+      <div class="upcoming-info"><div class="upcoming-name">${s?.name||'?'}</div><div class="upcoming-time">${u.day} &middot; ${fmtTime(u.time)}${tzLine}</div></div>
+      <div class="upcoming-when">${upWhen(u.date)}</div>
+    </div>`;
+  }).join('');
+
+  const el=document.getElementById('student-list');
+  if(!students.length){ el.innerHTML='<div class="empty"><div style="font-size:36px;opacity:.4;margin-bottom:12px">🎻</div><div style="font-size:14px">No students yet. Go to Settings to add one.</div></div>'; return; }
+  el.innerHTML=students.map(s=>{
+    const ss=gStudSessions(s.id);
+    const att2=ss.filter(x=>x.status==='attended').length;
+    const mis2=ss.filter(x=>x.status==='missed').length;
+    const sched=(s.schedule||[]).map(sl=>`${sl.day} ${fmtTime(sl.time)}`).join(' &middot; ');
+    const loc=s.location?`<span class="tz-pill" style="margin-top:5px">&#128205; ${s.location}</span>`:'';
+    return `<div class="student-card" onclick="openDetail('${s.id}')">
+      <div class="student-card-header">
+        <div class="student-avatar ${AV_COLORS[s.color%5]}">${initials(s.name)}</div>
+        <div class="student-info"><div class="student-name">${s.name}</div><div class="student-days">${sched}</div>${loc}</div>
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--text3);flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="student-stats">
+        <div class="stat"><div class="stat-val">${ss.length}</div><div class="stat-lbl">Total</div></div>
+        <div class="stat"><div class="stat-val" style="color:var(--green)">${att2}</div><div class="stat-lbl">Attended</div></div>
+        <div class="stat"><div class="stat-val" style="color:var(--red)">${mis2}</div><div class="stat-lbl">Missed</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getUpcoming(students, days){
+  const res=[], now=new Date(); now.setHours(0,0,0,0);
+  const dw=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  for(let d=0;d<=days;d++){
+    const dt=new Date(now); dt.setDate(now.getDate()+d);
+    const dn=dw[dt.getDay()];
+    students.forEach(s=>(s.schedule||[]).forEach(sl=>{ if(sl.day===dn) res.push({studentId:s.id,date:dStr(dt),day:DAYS_FULL[dn]||dn,time:sl.time}); }));
+  }
+  return res;
+}
+function upWhen(ds){
+  const now=new Date(); now.setHours(0,0,0,0);
+  const diff=Math.round((new Date(ds+'T00:00:00')-now)/86400000);
+  return diff===0?'Today':diff===1?'Tomorrow':'In '+diff+'d';
+}
+
+// ── SESSIONS ───────────────────────────────────────────────
+function setFilter(f, btn){
+  sesFilter=f;
+  document.querySelectorAll('#sf .badge').forEach(b=>b.style.opacity=b.dataset.f===f?'1':'0.5');
+  renderSessions();
+}
+function renderSessions(){
+  const q=(document.getElementById('session-search')?.value||'').toLowerCase();
+  let ss=gSessions().slice().sort((a,b)=>b.date.localeCompare(a.date));
+  if(sesFilter!=='all') ss=ss.filter(s=>s.status===sesFilter);
+  if(q) ss=ss.filter(s=>{ const st=gStudent(s.studentId); return (st?.name||'').toLowerCase().includes(q)||(s.lessons||'').toLowerCase().includes(q)||(s.notes||'').toLowerCase().includes(q)||(s.pdf||'').toLowerCase().includes(q); });
+  const el=document.getElementById('sessions-list');
+  if(!ss.length){ el.innerHTML='<div class="empty"><div style="font-size:36px;opacity:.4;margin-bottom:12px">&#128203;</div><div style="font-size:14px">No sessions found.</div></div>'; return; }
+  el.innerHTML=ss.map(s=>sesCard(s)).join('');
+}
+function sesCard(s){
+  const st=gStudent(s.studentId);
+  const [y,m,d]=s.date.split('-');
+  const badge=`<span class="badge badge-${s.status}">${s.status[0].toUpperCase()+s.status.slice(1)}</span>`;
+  const payTag=s.payment&&s.payment!=='n/a'?`<span class="payment-tag payment-${s.payment}">${pEm(s.payment)} ${s.payment}</span>`:'';
+  const pdfTag=s.pdf?`<span class="pdf-tag">&#128196; ${s.pdf}</span>`:'';
+  let tzLine='';
+  if(st?.timezone&&s.time){ const c=cvtTime(s.date,s.time,st.timezone); if(c) tzLine=`<span style="color:var(--purple);font-size:11px;margin-left:6px">${c} ${tzAbbr(st.timezone)}</span>`; }
+  return `<div class="card" onclick="editSession('${s.id}')" style="cursor:pointer">
+    <div class="session-item" style="padding:0;border:none">
+      <div class="session-date"><div class="session-date-day">${d}</div><div class="session-date-mon">${MON[parseInt(m)-1]}</div></div>
+      <div class="session-body">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:14px;font-weight:500">${st?.name||'?'}</span>${badge}</div>
+        ${s.time?`<div class="session-time">&#128336; ${fmtTime(s.time)}${tzLine}</div>`:''}
+        ${s.lessons?`<div class="session-lessons">&#127925; ${s.lessons}</div>`:''}
+        ${s.notes?`<div class="session-notes">&ldquo;${s.notes}&rdquo;</div>`:''}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${payTag}${pdfTag}</div>
+      </div>
+    </div>
+  </div>`;
+}
+function pEm(p){ return p==='paid'?'✓':p==='unpaid'?'✕':'~'; }
+
+// ── CALENDAR ───────────────────────────────────────────────
+function changeMonth(dir){ calDate=new Date(calDate.getFullYear(),calDate.getMonth()+dir,1); renderCalendar(); }
+function renderCalendar(){
+  const y=calDate.getFullYear(), m=calDate.getMonth();
+  document.getElementById('cal-month-label').textContent=MON_FULL[m]+' '+y;
+  const first=new Date(y,m,1).getDay(), dim=new Date(y,m+1,0).getDate();
+  const today=new Date(); today.setHours(0,0,0,0);
+  const sesDays=new Set(gSessions().map(s=>s.date));
+  const dw=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html=['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=>`<div class="cal-day-name">${d}</div>`).join('');
+  for(let i=0;i<first;i++) html+='<div class="cal-day other-month"></div>';
+  for(let d=1;d<=dim;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=new Date(y,m,d).getTime()===today.getTime();
+    const dow=dw[new Date(y,m,d).getDay()];
+    const hasDot=sesDays.has(ds)||DB.students.some(s=>(s.schedule||[]).some(sl=>sl.day===dow));
+    html+=`<div class="cal-day ${isToday?'today':''} ${hasDot?'dot':''}" onclick="showCalDay('${ds}')">${d}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+  document.getElementById('cal-day-sessions').innerHTML='';
+}
+function showCalDay(ds){
+  const [y,m,d]=ds.split('-');
+  const dow=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(ds+'T00:00:00').getDay()];
+  const sessions=gSessions().filter(s=>s.date===ds);
+  const scheduled=DB.students.filter(s=>(s.schedule||[]).some(sl=>sl.day===dow));
+  let html=`<div class="card"><div class="card-title">${d} ${MON[parseInt(m)-1]} &mdash; ${dow}</div>`;
+  if(sessions.length){
+    html+=sessions.map(s=>{ const st=gStudent(s.studentId);
+      let tzLine=''; if(st?.timezone&&s.time){ const c=cvtTime(s.date,s.time,st.timezone); if(c) tzLine=` &middot; <span style="color:var(--purple)">${c} ${tzAbbr(st.timezone)}</span>`; }
+      return `<div class="upcoming-item" onclick="editSession('${s.id}')">
+        <div class="upcoming-dot" style="background:${AV_BG[st?.color%5||0]}"></div>
+        <div class="upcoming-info"><div class="upcoming-name">${st?.name||'?'}</div><div class="upcoming-time">${fmtTime(s.time)}${tzLine} &middot; <span class="badge badge-${s.status}" style="padding:1px 6px;font-size:10px">${s.status}</span></div></div>
+      </div>`;
+    }).join('');
+  } else if(scheduled.length){
+    html+=scheduled.map(s=>{ const sl=(s.schedule||[]).find(x=>x.day===dow);
+      let tzLine=''; if(s.timezone&&sl?.time){ const c=cvtTime(ds,sl.time,s.timezone); if(c) tzLine=` &middot; <span style="color:var(--purple)">${c} ${tzAbbr(s.timezone)}</span>`; }
+      return `<div class="upcoming-item" onclick="openAddSession('${s.id}','${ds}')">
+        <div class="upcoming-dot" style="background:${AV_BG[s.color%5]}"></div>
+        <div class="upcoming-info"><div class="upcoming-name">${s.name}</div><div class="upcoming-time">${fmtTime(sl?.time)}${tzLine} &middot; Scheduled &mdash; tap to log</div></div>
+      </div>`;
+    }).join('');
+  } else html+='<div style="color:var(--text3);font-size:13px">No classes on this day.</div>';
+  document.getElementById('cal-day-sessions').innerHTML=html+'</div>';
+}
+
+// ── SETTINGS ───────────────────────────────────────────────
+function renderSettings(){
+  const students=gStudents();
+  document.getElementById('settings-students').innerHTML=students.length?students.map(s=>`
+    <div class="card" onclick="openEditStudent('${s.id}')" style="cursor:pointer;display:flex;align-items:center;gap:12px">
+      <div class="student-avatar ${AV_COLORS[s.color%5]}" style="width:40px;height:40px;font-size:17px">${initials(s.name)}</div>
+      <div style="flex:1">
+        <div style="font-weight:500">${s.name}</div>
+        <div style="font-size:12px;color:var(--text3)">${(s.schedule||[]).map(sl=>`${sl.day} ${fmtTime(sl.time)}`).join(', ')}</div>
+        ${s.location?`<div style="font-size:11px;color:var(--purple);margin-top:2px">&#128205; ${s.location}</div>`:''}
+      </div>
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--text3)"><path stroke-linecap="round" d="M9 18l6-6-6-6"/></svg>
+    </div>`).join(''):'<div style="color:var(--text3);font-size:13px;margin-bottom:12px">No students yet.</div>';
+}
+
+// ── DETAIL ─────────────────────────────────────────────────
+function openDetail(sid){
+  detailSid=sid;
+  const s=gStudent(sid);
+  const sessions=gStudSessions(sid);
+  const att=sessions.filter(x=>x.status==='attended').length;
+  const mis=sessions.filter(x=>x.status==='missed').length;
+  const can=sessions.filter(x=>x.status==='cancelled').length;
+  const paid=sessions.filter(x=>x.payment==='paid').length;
+  const unpaid=sessions.filter(x=>x.payment==='unpaid').length;
+
+  const meetBtn=s.meet?`<a href="${s.meet}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(90,143,224,.15);color:var(--blue);padding:6px 14px;border-radius:20px;font-size:13px;text-decoration:none;margin-top:4px">&#128249; Open Meet link</a>`:'';
+  const locLine=s.location?`<div style="color:var(--purple);font-size:12px;margin-top:3px">&#128205; ${s.location}${s.timezone?' &middot; '+tzAbbr(s.timezone):''}</div>`:'';
+
+  let tzClock='';
+  if(s.timezone){
+    const now=new Date();
+    tzClock=`<div class="card" style="margin-bottom:14px">
+      <div class="card-title">&#9200; Right now — timezone</div>
+      <div class="tz-compare">
+        <div class="tz-col"><div class="tz-time">${fmtInTz(now,myTz())}</div><div class="tz-label">Your time (${tzAbbr(myTz())})</div></div>
+        <div class="tz-arrow">&#8594;</div>
+        <div class="tz-col"><div class="tz-time" style="color:var(--purple)">${fmtInTz(now,s.timezone)}</div><div class="tz-label">${s.location||'Student'} (${tzAbbr(s.timezone)})</div></div>
+      </div>
+    </div>`;
+  }
+
+  const sessHTML=!sessions.length?'<div class="empty" style="padding:24px 0"><div style="font-size:14px;color:var(--text3)">No sessions logged yet.</div></div>':
+    sessions.map(s2=>{
+      const [y,m,d]=s2.date.split('-');
+      let tzLine=''; if(s.timezone&&s2.time){ const c=cvtTime(s2.date,s2.time,s.timezone); if(c) tzLine=`<span style="color:var(--purple);font-size:11px;margin-left:4px">${c} ${tzAbbr(s.timezone)}</span>`; }
+      return `<div class="session-item" onclick="editSession('${s2.id}')" style="cursor:pointer">
+        <div class="session-date"><div class="session-date-day">${d}</div><div class="session-date-mon">${MON[parseInt(m)-1]}</div></div>
+        <div class="session-body">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span class="badge badge-${s2.status}">${s2.status[0].toUpperCase()+s2.status.slice(1)}</span>
+            ${s2.payment&&s2.payment!=='n/a'?`<span class="payment-tag payment-${s2.payment}" style="font-size:10px;padding:1px 6px">${pEm(s2.payment)} ${s2.payment}</span>`:''}
+          </div>
+          ${s2.time?`<div class="session-time">&#128336; ${fmtTime(s2.time)}${tzLine}</div>`:''}
+          ${s2.lessons?`<div class="session-lessons">&#127925; ${s2.lessons}</div>`:''}
+          ${s2.notes?`<div class="session-notes">&ldquo;${s2.notes}&rdquo;</div>`:''}
+          ${s2.pdf?`<div style="margin-top:4px"><span class="pdf-tag">&#128196; ${s2.pdf}</span></div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+
+  document.getElementById('detail-content').innerHTML=`
+    <div class="detail-header">
+      <div class="detail-avatar ${AV_COLORS[s.color%5]}">${initials(s.name)}</div>
+      <div style="flex:1">${locLine}<div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600">${s.name}</div><div style="margin-top:4px">${meetBtn}</div></div>
+      <button onclick="openEditStudent('${s.id}')" style="background:var(--surface2);border:none;color:var(--text2);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0">Edit</button>
+    </div>
+    <div class="summary-row">
+      <div class="summary-box"><div class="summary-box-val" style="color:var(--green)">${att}</div><div class="summary-box-lbl">Attended</div></div>
+      <div class="summary-box"><div class="summary-box-val" style="color:var(--red)">${mis}</div><div class="summary-box-lbl">Missed</div></div>
+      <div class="summary-box"><div class="summary-box-val" style="color:var(--amber)">${can}</div><div class="summary-box-lbl">Cancelled</div></div>
+    </div>
+    ${tzClock}
+    ${(paid+unpaid)?`<div class="card" style="margin-bottom:14px"><div class="card-title">Payment</div><div style="display:flex;gap:10px"><span class="payment-tag payment-paid">&#10003; ${paid} paid</span>${unpaid?`<span class="payment-tag payment-unpaid">&#10005; ${unpaid} unpaid</span>`:''}</div></div>`:''}
+    ${s.notes?`<div class="card" style="margin-bottom:14px"><div class="card-title">Notes</div><div style="font-size:13px;color:var(--text2)">${s.notes}</div></div>`:''}
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="section-title">Sessions (${sessions.length})</div>
+      <button class="btn btn-primary" onclick="openAddSession('${sid}')" style="width:auto;padding:8px 16px;font-size:13px">&#65291; Log class</button>
+    </div>
+    ${sessHTML}`;
+  document.getElementById('detail-page').style.display='block';
+  document.getElementById('app').style.display='none';
+}
+function closeDetail(){ document.getElementById('detail-page').style.display='none'; document.getElementById('app').style.display='flex'; detailSid=null; renderHome(); }
+
+// ── SCHEDULE SLOT EDITOR ───────────────────────────────────
+function renderSlots(slots){
+  document.getElementById('sched-slots').innerHTML=slots.map((sl,i)=>`
+    <div class="sched-slot">
+      <div class="sched-slot-body">
+        <select class="slot-sel" id="sl-day-${i}">${DAYS.map(d=>`<option value="${d}" ${d===sl.day?'selected':''}>${d}</option>`).join('')}</select>
+        <input type="time" class="slot-time" id="sl-time-${i}" value="${sl.time||''}">
+      </div>
+      <button class="slot-rm" onclick="rmSlot(${i})">&#10005;</button>
+    </div>`).join('');
+}
+function addSlot(){ const s=readSlots(); s.push({day:'Mon',time:''}); renderSlots(s); }
+function rmSlot(i){ const s=readSlots(); if(s.length<=1){ showToast('Need at least one class day'); return; } s.splice(i,1); renderSlots(s); }
+function readSlots(){
+  const slots=[];
+  document.querySelectorAll('#sched-slots .sched-slot').forEach((_,i)=>{
+    slots.push({day:document.getElementById('sl-day-'+i)?.value||'Mon',time:document.getElementById('sl-time-'+i)?.value||''});
+  });
+  return slots;
+}
+
+// ── ADD/EDIT STUDENT ───────────────────────────────────────
+function openAddStudent(){
+  document.getElementById('edit-sid').value='';
+  document.getElementById('s-name').value='';
+  document.getElementById('s-loc').value='';
+  document.getElementById('s-tz').value='';
+  document.getElementById('s-meet').value='';
+  document.getElementById('s-notes').value='';
+  document.getElementById('tz-preview').style.display='none';
+  document.getElementById('del-stu-btn').style.display='none';
+  document.getElementById('ss-title').textContent='Add student';
+  renderSlots([{day:'Mon',time:''}]);
+  openSheet('sheet-student');
+}
+function openEditStudent(sid){
+  const s=gStudent(sid); if(!s) return;
+  document.getElementById('edit-sid').value=sid;
+  document.getElementById('s-name').value=s.name;
+  document.getElementById('s-loc').value=s.location||'';
+  document.getElementById('s-tz').value=s.timezone||'';
+  document.getElementById('s-meet').value=s.meet||'';
+  document.getElementById('s-notes').value=s.notes||'';
+  document.getElementById('ss-title').textContent='Edit student';
+  document.getElementById('del-stu-btn').style.display='flex';
+  renderSlots(s.schedule?.length?s.schedule:[{day:'Mon',time:''}]);
+  updateTzPreview();
+  openSheet('sheet-student');
+}
+function saveStudent(){
+  const name=document.getElementById('s-name').value.trim();
+  if(!name){ showToast('Please enter a name'); return; }
+  const sid=document.getElementById('edit-sid').value;
+  const data={name,schedule:readSlots(),timezone:document.getElementById('s-tz').value,location:document.getElementById('s-loc').value.trim(),meet:document.getElementById('s-meet').value.trim(),notes:document.getElementById('s-notes').value.trim()};
+  if(sid){ Object.assign(gStudent(sid),data); }
+  else DB.students.push({id:uid(),color:DB.students.length%5,createdAt:Date.now(),...data});
+  saveDB(); closeSheet('sheet-student'); showToast('Student saved!'); renderHome(); renderSettings();
+  if(detailSid) openDetail(detailSid);
+}
+function deleteStudent(){
+  const sid=document.getElementById('edit-sid').value; if(!sid) return;
+  if(!confirm('Delete this student? All their sessions will also be removed.')) return;
+  DB.students=DB.students.filter(s=>s.id!==sid);
+  DB.sessions=DB.sessions.filter(s=>s.studentId!==sid);
+  saveDB(); closeSheet('sheet-student'); showToast('Student deleted'); renderSettings(); renderHome(); closeDetail();
+}
+
+// ── ADD/EDIT SESSION ───────────────────────────────────────
+let curStatus='attended';
+function openAddSession(preSid, preDate){
+  document.getElementById('edit-ses-id').value='';
+  document.getElementById('del-ses-btn').style.display='none';
+  curStatus='attended';
+  document.querySelectorAll('.status-opt').forEach(b=>b.className='status-opt');
+  document.querySelector('.status-opt').classList.add('sel-attended');
+  const students=gStudents();
+  const sel=document.getElementById('ses-student');
+  sel.innerHTML=students.map(s=>`<option value="${s.id}" ${s.id===preSid?'selected':''}>${s.name}</option>`).join('');
+  if(preSid) sel.value=preSid;
+  const today=preDate||dStr(new Date());
+  document.getElementById('ses-date').value=today;
+  const sid=sel.value, st=gStudent(sid);
+  const dow=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(today+'T00:00:00').getDay()];
+  const slot=(st?.schedule||[]).find(sl=>sl.day===dow)||(st?.schedule||[])[0];
+  document.getElementById('ses-time').value=slot?.time||'';
+  document.getElementById('ses-lessons').value='';
+  document.getElementById('ses-notes').value='';
+  document.getElementById('ses-pdf').value='';
+  document.getElementById('ses-pay').value='n/a';
+  document.getElementById('stz-box').classList.remove('on');
+  onSesTimeChange();
+  openSheet('sheet-session');
+}
+function onSesStudentChange(){
+  const sid=document.getElementById('ses-student').value, st=gStudent(sid);
+  const dateVal=document.getElementById('ses-date').value;
+  const dow=dateVal?['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(dateVal+'T00:00:00').getDay()]:'';
+  const slot=(st?.schedule||[]).find(sl=>sl.day===dow)||(st?.schedule||[])[0];
+  document.getElementById('ses-time').value=slot?.time||'';
+  onSesTimeChange();
+}
+function editSession(id){
+  const s=gSessions().find(x=>x.id===id); if(!s) return;
+  document.getElementById('edit-ses-id').value=id;
+  document.getElementById('del-ses-btn').style.display='flex';
+  const sel=document.getElementById('ses-student');
+  sel.innerHTML=gStudents().map(st=>`<option value="${st.id}" ${st.id===s.studentId?'selected':''}>${st.name}</option>`).join('');
+  sel.value=s.studentId;
+  document.getElementById('ses-date').value=s.date;
+  document.getElementById('ses-time').value=s.time||'';
+  document.getElementById('ses-lessons').value=s.lessons||'';
+  document.getElementById('ses-notes').value=s.notes||'';
+  document.getElementById('ses-pdf').value=s.pdf||'';
+  document.getElementById('ses-pay').value=s.payment||'n/a';
+  curStatus=s.status||'attended';
+  document.querySelectorAll('.status-opt').forEach(b=>b.className='status-opt');
+  document.querySelector(`.status-opt[onclick*="${curStatus}"]`)?.classList.add('sel-'+curStatus);
+  onSesTimeChange();
+  openSheet('sheet-session');
+}
+function pickStatus(s,btn){ curStatus=s; document.querySelectorAll('.status-opt').forEach(b=>b.className='status-opt'); btn.classList.add('sel-'+s); }
+function saveSession(){
+  const studentId=document.getElementById('ses-student').value;
+  const date=document.getElementById('ses-date').value;
+  if(!date){ showToast('Please pick a date'); return; }
+  const eid=document.getElementById('edit-ses-id').value;
+  const data={studentId,date,time:document.getElementById('ses-time').value,status:curStatus,lessons:document.getElementById('ses-lessons').value.trim(),notes:document.getElementById('ses-notes').value.trim(),pdf:document.getElementById('ses-pdf').value.trim(),payment:document.getElementById('ses-pay').value,updatedAt:Date.now()};
+  if(eid){ const idx=DB.sessions.findIndex(s=>s.id===eid); if(idx!==-1) DB.sessions[idx]={...DB.sessions[idx],...data}; }
+  else DB.sessions.push({id:uid(),createdAt:Date.now(),...data});
+  saveDB(); closeSheet('sheet-session'); showToast('Class saved!');
+  if(detailSid) openDetail(detailSid);
+  else{ renderHome(); if(curPage==='sessions') renderSessions(); if(curPage==='calendar') renderCalendar(); }
+}
+function deleteSession(){
+  const eid=document.getElementById('edit-ses-id').value; if(!eid) return;
+  DB.sessions=DB.sessions.filter(s=>s.id!==eid);
+  saveDB(); closeSheet('sheet-session'); showToast('Session deleted');
+  if(detailSid) openDetail(detailSid);
+  else{ renderHome(); if(curPage==='sessions') renderSessions(); }
+}
+
+// ── UTILS ──────────────────────────────────────────────────
+function openSheet(id){ document.getElementById(id).classList.add('open'); }
+function closeSheet(id){ document.getElementById(id).classList.remove('open'); }
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+function initials(name){ const p=name.trim().split(' '); return p.length>=2?(p[0][0]+p[p.length-1][0]).toUpperCase():name.slice(0,2).toUpperCase(); }
+function fmtTime(t){ if(!t) return ''; const [h,m]=t.split(':').map(Number); return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`; }
+function dStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+document.querySelectorAll('.sheet-overlay').forEach(el=>el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open'); }));
+
+// ── INIT ───────────────────────────────────────────────────
+loadDB(); renderHome();
+</script>
+</body>
+</html>
