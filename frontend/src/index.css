@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-brand-bg text-white antialiased;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1, h2, h3, .font-serif {
+    font-family: 'Cormorant Garamond', serif;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-brand-surface border border-white/5 rounded-2xl p-4 transition-all;
+  }
+  
+  .glass {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10;
+  }
+
+  .premium-btn {
+    @apply px-5 py-2.5 rounded-xl font-medium transition-all active:scale-[0.98] disabled:opacity-50 inline-flex items-center justify-center;
+  }
+
+  .premium-btn-primary {
+    @apply premium-btn bg-brand-gold text-brand-bg hover:bg-brand-goldLight;
+  }
+
+  .premium-btn-secondary {
+    @apply premium-btn bg-brand-surfaceLight text-white border border-white/10 hover:bg-white/10;
+  }
+
+  .premium-input {
+    @apply w-full bg-brand-surfaceLight border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-brand-gold/50 transition-all text-white placeholder:text-brand-darkMuted;
+  }
+}
