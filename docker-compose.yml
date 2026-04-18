@@ -1,7 +1,8 @@
-version: '3.8'
+name: sreevatsa-test
 
 services:
   db:
+    container_name: sreevatsa-test-db
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: user
@@ -13,6 +14,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   backend:
+    container_name: sreevatsa-test-api
+    image: sreevatsa-test-api:latest
     build: ./backend
     volumes:
       - ./backend:/app
@@ -24,6 +27,8 @@ services:
       - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/violin_db
 
   frontend:
+    container_name: sreevatsa-test-app
+    image: sreevatsa-test-app:latest
     build: ./frontend
     volumes:
       - ./frontend:/app
